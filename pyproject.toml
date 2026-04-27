@@ -1,0 +1,49 @@
+[project]
+name = "freshmint"
+version = "0.0.1"
+description = "Pythonic C2PA — sign every AI-generated image with verifiable provenance."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "atakan" }]
+keywords = ["c2pa", "provenance", "ai", "content-credentials", "watermark", "halluguard"]
+classifiers = [
+  "Development Status :: 1 - Planning",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Security :: Cryptography",
+  "Topic :: Multimedia :: Graphics",
+]
+
+# v0.0 has no runtime deps (only stubs).
+# v0.1 adds: c2patool binary detection helper.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.5"]
+server = ["fastapi>=0.110", "uvicorn[standard]>=0.30", "pydantic>=2.5"]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["freshmint*"]
+
+[tool.setuptools.package-data]
+freshmint = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
