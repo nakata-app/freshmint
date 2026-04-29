@@ -4,7 +4,7 @@
 
 Please **do not** open a public GitHub issue for security-sensitive
 findings. Instead, email the maintainer at
-**ataknakbaba@gmail.com** with:
+**hey@nakata.app** with:
 
 - A description of the issue.
 - Steps to reproduce (a minimal repro is enough).
