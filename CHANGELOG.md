@@ -45,30 +45,35 @@ release ports the wrapper to the new shape.
 
 [0.1.1]: https://github.com/nakata-app/freshmint/releases/tag/v0.1.1
 
-## [0.1.0] - 2026-04-29
+## [0.1.0] - 2026-04-29, DO NOT USE, superseded by 0.1.1
 
-First working release. Sign and verify both produce real C2PA manifests
-when an Adobe `c2patool` binary is present on the host.
+> **Known broken.** Use 0.1.1 instead. This release passed `--key` and
+> `--cert` to `c2patool` on the command line, but those flags were
+> removed in `c2patool` 0.26 and never restored. Real-binary
+> `sign()` / `verify()` calls fail with
+> `unexpected argument '--key'`. Unit tests at the time of release
+> mocked `subprocess.run` and were green, which masked the regression.
+> Fixed in 0.1.1, which moves key / cert into the manifest JSON the
+> way modern `c2patool` expects.
 
-### Added
+### Added (intent at the time of release)
 - `freshmint.sign()`, embed a `Manifest` into an image / video / audio
-  file, signed with a PEM key. Optional X.509 cert chain; falls back to
-  c2patool's self-signed prototype cert when omitted.
+  file, signed with a PEM key. Optional X.509 cert chain.
 - `freshmint.verify()`, read and validate a C2PA manifest, returning a
-  `VerifyResult` (signer identity, edit history, AI attestation, validity
-  flags). Never raises on validation failure, always returns a populated
-  result.
+  `VerifyResult` (signer identity, edit history, AI attestation,
+  validity flags). Never raises on validation failure, always returns
+  a populated result.
 - `freshmint.binary.find_c2patool()`, locate the Adobe binary via
   `FRESHMINT_C2PATOOL` env override, `PATH`, Homebrew, or common Linux
-  install paths. Clear `C2PAToolNotFound` error with install hints when
-  missing.
+  install paths. Clear `C2PAToolNotFound` error with install hints
+  when missing.
 - `Manifest`, `Action`, `AIAttestation`, `VerifyResult` dataclasses.
 - Manifest ↔ c2patool JSON serialization, including `extra_assertions`
   for cluster-specific metadata (e.g. halluguard scores, source image
   hashes).
 
 ### Internals
-- 16 unit tests, mypy `--strict` clean, ruff clean.
+- 16 unit tests (mocked subprocess), mypy `--strict` clean, ruff clean.
 - No runtime dependencies; `c2patool` is the only external requirement.
 
 [0.1.0]: https://github.com/nakata-app/freshmint/releases/tag/v0.1.0
