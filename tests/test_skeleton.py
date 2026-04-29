@@ -21,7 +21,7 @@ import pytest
 def test_imports_and_version():
     import freshmint
 
-    assert freshmint.__version__ == "0.0.1"
+    assert freshmint.__version__ == "0.1.0"
     assert freshmint.Manifest is not None
     assert freshmint.Action is not None
     assert freshmint.AIAttestation is not None
