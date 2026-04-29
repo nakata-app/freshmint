@@ -1,6 +1,6 @@
 [project]
 name = "freshmint"
-version = "0.1.0"
+version = "0.1.1"
 description = "Pythonic C2PA, sign every AI-generated image with verifiable provenance."
 readme = "README.md"
 requires-python = ">=3.10"

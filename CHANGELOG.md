@@ -4,6 +4,47 @@ All notable changes to **freshmint** are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-04-29
+
+Compatibility hotfix for c2patool 0.26+. The 0.1.0 wrapper passed
+`--key` / `--cert` on the command line, which the modern c2patool CLI
+no longer accepts; sign / verify against a real binary failed. This
+release ports the wrapper to the new shape.
+
+### Changed (breaking against c2patool 0.x, transparent for callers)
+- `sign()` now embeds `private_key` and `sign_cert` directly in the
+  manifest JSON instead of passing them via removed CLI flags.
+  Public Python signature is unchanged.
+- `manifest_to_c2pa_json(manifest, *, signing_key, cert, alg)` now
+  accepts key / cert / algorithm explicitly. The previous one-arg
+  form is gone (internal helper, no public callers).
+- `parse_verify_output` rewritten for the modern verify schema
+  (`validation_state` + `validation_results.activeManifest` instead
+  of the legacy `validation_status` array; `assertion_store` keyed
+  by label instead of an `assertions` list).
+- `c2pa.created` (or `c2pa.opened`) is now auto-synthesised at the
+  head of `c2pa.actions` when the caller provides none. C2PA
+  validation requires this for `validation_state=Valid`.
+- AI attestation now lands under
+  `org.nakata.freshmint.ai_attestation` (custom assertion) and the
+  synthesised `c2pa.created` action declares
+  `digitalSourceType=trainedAlgorithmicMedia` plus the model name in
+  `softwareAgent`, so verifiers reading only `c2pa.actions` still
+  see "AI was used".
+
+### Added
+- `tests/test_integration.py`, real-binary sign + verify roundtrip,
+  AI attestation roundtrip, tamper detection. Auto-skips when
+  `c2patool` or `openssl` is missing on the host.
+- `cert` parameter is now documented as required for production
+  signing (c2patool 0.26+ rejects self-signed certs at embed time).
+
+### Internals
+- 21 unit + 3 integration tests, mypy `--strict` clean, ruff clean,
+  ~92% coverage.
+
+[0.1.1]: https://github.com/nakata-app/freshmint/releases/tag/v0.1.1
+
 ## [0.1.0] - 2026-04-29
 
 First working release. Sign and verify both produce real C2PA manifests

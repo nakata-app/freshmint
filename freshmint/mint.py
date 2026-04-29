@@ -1,13 +1,13 @@
-"""sign / verify entry points — v0.1 wraps Adobe c2patool via subprocess.
+"""sign / verify entry points for c2patool 0.26+.
 
 c2patool is the official Rust CLI from the Content Authenticity
-Initiative. It reads a JSON manifest, applies it to a media file,
-and signs the result with the supplied PEM key. We translate our
-pythonic `Manifest` dataclass into the JSON shape c2patool expects,
-shell out, and translate the verify output back into `VerifyResult`.
+Initiative. We translate our pythonic `Manifest` into the JSON shape
+c2patool 0.26+ expects (with `private_key` / `sign_cert` embedded in
+the manifest, not on the command line), shell out, and translate the
+verify output back into `VerifyResult`.
 
 v1.0 may swap subprocess for a pure-Python COSE/CBOR implementation
-to drop the Adobe binary dependency. Either way the signatures
+to drop the Adobe binary dependency. Either way the public signatures
 below stay stable.
 """
 from __future__ import annotations
@@ -30,6 +30,7 @@ def sign(
     output_path: str | Path | None = None,
     *,
     cert: str | Path | None = None,
+    alg: str = "es256",
     **_: Any,
 ) -> Path:
     """Embed a C2PA manifest into ``input_path`` and write the signed file.
@@ -37,11 +38,16 @@ def sign(
     Args:
         input_path: image / video / audio to sign.
         manifest: declarations to embed.
-        signing_key: path to a PEM private key.
+        signing_key: path to a PEM private key (embedded in the manifest
+            JSON c2patool 0.26+ requires this on the manifest, not on
+            the CLI).
         output_path: where to write the signed file. Defaults to
-            ``<input>.signed.<ext>`` next to the source.
-        cert: optional X.509 cert chain (PEM). When omitted, c2patool
-            uses a self-signed cert — prototype-OK, no external trust.
+            ``<input>.signed<ext>`` next to the source.
+        cert: PEM cert (or chain) path. Required for production-grade
+            signing because c2patool 0.26+ rejects self-signed certs at
+            the embed step (`validation_state=Invalid` otherwise). Pass
+            a CA-issued leaf for `validation_state=Valid`.
+        alg: signature algorithm matching the key. Default `es256`.
 
     Returns:
         Path to the signed file.
@@ -57,12 +63,21 @@ def sign(
     signing_key = Path(signing_key)
     if not signing_key.exists():
         raise FileNotFoundError(signing_key)
+    if cert is not None:
+        cert = Path(cert)
+        if not cert.exists():
+            raise FileNotFoundError(cert)
     if output_path is None:
         output_path = input_path.with_suffix(f".signed{input_path.suffix}")
     output_path = Path(output_path)
 
     binary = find_c2patool()
-    payload = manifest_to_c2pa_json(manifest)
+    payload = manifest_to_c2pa_json(
+        manifest,
+        signing_key=signing_key,
+        cert=cert,
+        alg=alg,
+    )
 
     with tempfile.TemporaryDirectory() as td:
         manifest_file = Path(td) / "manifest.json"
@@ -75,11 +90,8 @@ def sign(
             str(manifest_file),
             "--output",
             str(output_path),
-            "--key",
-            str(signing_key),
+            "--force",
         ]
-        if cert is not None:
-            cmd += ["--cert", str(cert)]
 
         completed = subprocess.run(
             cmd,
@@ -102,7 +114,7 @@ def verify(input_path: str | Path, **_: Any) -> VerifyResult:
     Returns:
         ``VerifyResult`` populated with signer identity, edit history,
         AI attestation (if present), and validation flags. Always
-        returns — never raises on validation failure; check
+        returns, never raises on validation failure; check
         ``result.is_valid`` and ``result.error`` instead.
 
     Raises:
@@ -122,7 +134,6 @@ def verify(input_path: str | Path, **_: Any) -> VerifyResult:
         text=True,
     )
     if completed.returncode != 0 and not completed.stdout.strip():
-        # No JSON to parse — return a diagnostic VerifyResult.
         return VerifyResult(
             is_valid=False,
             tampered=False,

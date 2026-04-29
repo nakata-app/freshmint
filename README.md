@@ -143,13 +143,18 @@ distribution so consumers don't have to detect at all, they verify.
 
 ## What v0.1 ships
 
-- Adobe `c2patool` subprocess wrapper with binary autodetect (env
-  override → PATH → Homebrew → Linux package paths)
-- `sign(path, manifest, signing_key)` end-to-end working
-- `verify(path)` returns a populated `VerifyResult`
-- Clear errors for missing binary, missing key, c2patool non-zero exit
+- Adobe `c2patool` 0.26+ subprocess wrapper with binary autodetect
+  (env override → PATH → Homebrew → Linux package paths)
+- `sign(path, manifest, signing_key, cert=...)` end-to-end working
+  (real binary roundtrip in CI / locally)
+- `verify(path)` returns a populated `VerifyResult` against the
+  modern c2patool schema
+- Clear errors for missing binary, missing key, missing cert,
+  c2patool non-zero exit
 - AI-attestation helpers (model, prompt hash, source image, seed)
-- 16 unit tests, mypy `--strict`, ruff clean
+- Auto-synthesised `c2pa.created` action so default manifests pass
+  C2PA validation (`validation_state=Valid`)
+- 21 unit + 3 integration tests, mypy `--strict`, ruff clean
 - Zero runtime dependencies
 
 ## Roadmap
